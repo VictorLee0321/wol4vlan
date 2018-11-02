@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -27,13 +28,11 @@ const (
 )
 
 var (
-	delims      = ":-"
-	reMAC       = regexp.MustCompile(`^([0-9a-fA-F]{2}[` + delims + `]){5}([0-9a-fA-F]{2})$`)
-	cliFlags    selfFlags
-	logFileName = "/var/log/sendwolpacket.log"
-	logFile     io.Writer
-	err         error
-	debugLog    *log.Logger
+	delims   = ":-"
+	reMAC    = regexp.MustCompile(`^([0-9a-fA-F]{2}[` + delims + `]){5}([0-9a-fA-F]{2})$`)
+	cliFlags selfFlags
+	err      error
+	debugLog *log.Logger
 )
 
 // ipFromInterface returns a `*net.UDPAddr` from a network interface name.
@@ -257,7 +256,12 @@ func SubnetCalculator(ip string, networkSize int) *Ip {
 }
 
 func main() {
-	logFile, err = os.Create(logFileName)
+	logFileName := "/var/log/sendwolpacket.log"
+	if runtime.GOOS == "windows" {
+		logFileName = "sendwolpacket.log"
+	}
+	var logFile io.Writer
+	logFile, err = os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatalln("open file error !")
 	}
@@ -320,10 +324,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	err = wakeCmd([]string{mac[0], broadcastIp})
 
 	if err != nil {
-		debugLog.Printf("command finished with error: %v\n", err)
+		debugLog.Printf("======command finished with error: %v\n", err)
 		fmt.Fprintf(w, "command finished with error: %v\n", err)
+	} else {
+		debugLog.Printf("======finished wakeonlan cmd======\n")
+		fmt.Fprintf(w, "0")
 	}
-	debugLog.Printf("======finished wakeonlan cmd======\n")
-	fmt.Fprintf(w, "======finished wakeonlan cmd")
 
 }
