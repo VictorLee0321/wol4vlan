@@ -5,6 +5,8 @@ function https_get($url){
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_HEADER, 1);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 1);
+        curl_setopt($curl, CURLOPT_TIMEOUT, 2);
         $output = curl_exec($curl);
         list($header, $body) = explode("\r\n\r\n", $output, 2);
         curl_close($curl);
